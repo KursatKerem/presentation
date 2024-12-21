@@ -1,20 +1,20 @@
 const { Server } = require("socket.io");
 
 const users = []; // { username: string, id: string }[]
-const onlineUsers = []; // string[]
 
 const connectIoToServer = (server) => {
   const io = new Server(server);
 
   io.on("connection", (socket) => {
-    socket.emit("online", onlineUsers.length);
+    socket.emit("online", users.length);
 
     socket.on("user:new", (username) => {
       users.push({ username, id: socket.id });
-      onlineUsers.push(socket.id);
+
+      console.log(users);
 
       socket.emit("chat:connect");
-      io.emit("online", onlineUsers.length);
+      io.emit("online", users.length);
     });
 
     socket.on("chat:message:new", ({ username, message }) => {
@@ -26,14 +26,9 @@ const connectIoToServer = (server) => {
     socket.on("disconnect", () => {
       const foundIndex = users.findIndex((_) => _.id === socket.id);
 
-      if (foundIndex !== -1) users.splice(foundIndex);
-
-      const foundOnlineUserIndex = users.findIndex((_) => _ === socket.id);
-
-      if (foundOnlineUserIndex !== -1) {
-        onlineUsers.splice(foundOnlineUserIndex);
-
-        io.emit("online", onlineUsers.length);
+      if (foundIndex !== -1) {
+        users.splice(foundIndex, 1);
+        io.emit("online", users.length);
       }
     });
   });
